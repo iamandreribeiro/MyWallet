@@ -55,4 +55,16 @@ app.post("/sign-up", (req, res) => {
     }    
 });
 
+app.post("/sign-in", async (req, res) => {
+    const {email, password} = req.body;
+
+    const user = await db.collection("users").findOne({email});
+
+    if(user && bcrypt.compareSync(password, user.password)) {        
+        return res.status(200).send(user);
+    } else {
+        return res.sendStatus(404);
+    }
+});
+
 app.listen(process.env.PORT, () => console.log(`Server running in port ${process.env.PORT}`));
