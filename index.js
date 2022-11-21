@@ -4,6 +4,7 @@ import { MongoClient } from 'mongodb';
 import Joi from 'joi';
 import cors from 'cors';
 import bcrypt from 'bcrypt';
+import dayjs from 'dayjs';
 
 const app = express();
 
@@ -36,7 +37,7 @@ app.post("/sign-up", (req, res) => {
     const validateSignUp = validation.validate({name, email, password, confirmPassword}, {abortEarly: false});
 
     if(validateSignUp.error) {
-        res.status(422).send(validateSignUp.error.details.map(value => value.message));
+        return res.status(422).send(validateSignUp.error.details.map(value => value.message));
     } else {
         db.collection("users").find({email}).toArray().then((user) => {
             if(user.length > 0) {
@@ -64,6 +65,39 @@ app.post("/sign-in", async (req, res) => {
         return res.status(200).send(user);
     } else {
         return res.sendStatus(404);
+    }
+});
+
+app.post("/new-record", (req, res) => {
+    const {value, description, email, type} = req.body;
+
+    const validation = Joi.object({
+        value: Joi.number().required(),
+        description: Joi.string().required(),
+        email: Joi.string().email().required(),
+        type: Joi.string().valid("input", "output")
+    });
+
+    const validateRecord = validation.validate(req.body, {abortEarly: false});
+
+    if(validateRecord.error) {
+        return res.status(422).send(validateRecord.error.details.map(value => value.message));
+    } else {
+        db.collection("users").findOne({email}).then((user) => {
+            if(user) {
+                db.collection("records").insertOne({
+                    date: dayjs().format('DD/MM'),
+                    value: value,
+                    description: description,
+                    email: email,
+                    type: type
+                });
+
+                return res.sendStatus(201);
+            } else {
+                return res.sendStatus(404);
+            }
+        });        
     }
 });
 
