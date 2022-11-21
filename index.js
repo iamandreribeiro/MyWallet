@@ -25,7 +25,6 @@ const db = client.db("mywallet");
 
 app.post("/sign-up", (req, res) => {
     const {name, email, password, passwordConfirmation} = req.body;
-    console.log(name, email, password, passwordConfirmation);
 
     const validation = Joi.object({
         name: Joi.string().required().min(3),
@@ -102,9 +101,9 @@ app.post("/new-record", (req, res) => {
 });
 
 app.get("/show-records", async (req, res) => {
-    const {email} = req.body;
-
+    const {email} = req.headers;
     const filteredRecords = [];
+    const user = await db.collection("users").findOne({email});
 
     await db.collection("records").find({}).toArray().then((records) => {
         records.forEach((record) => {
@@ -113,8 +112,8 @@ app.get("/show-records", async (req, res) => {
             }
         });
     });
-    
-    return res.status(201).send(filteredRecords);
+
+    return res.status(201).send({filteredRecords, user});
 });
 
 app.listen(process.env.PORT, () => console.log(`Server running in port ${process.env.PORT}`));
