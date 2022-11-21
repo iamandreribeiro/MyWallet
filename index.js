@@ -101,4 +101,20 @@ app.post("/new-record", (req, res) => {
     }
 });
 
+app.get("/show-records", async (req, res) => {
+    const {email} = req.body;
+
+    const filteredRecords = [];
+
+    await db.collection("records").find({}).toArray().then((records) => {
+        records.forEach((record) => {
+            if(record.email === email) {
+                filteredRecords.push(record);
+            }
+        });
+    });
+    
+    return res.status(201).send(filteredRecords);
+});
+
 app.listen(process.env.PORT, () => console.log(`Server running in port ${process.env.PORT}`));
